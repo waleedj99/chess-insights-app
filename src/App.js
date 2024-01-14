@@ -1,6 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import InsightsPoster from './components/InsightsPoster';
-import {FormGroup, InputLabel,FormControl, Button, Input, MenuItem, Select, Card, AppBar, Typography, CardContent, Box } from '@mui/material';
+import CssBaseline from '@mui/material/CssBaseline';
+import { ThemeProvider, createTheme } from '@mui/material/styles';
+
+import {FormGroup, InputLabel,FormControl,LinearProgress, Button, Input, MenuItem, Select, Card, AppBar, Typography, CardContent, Box } from '@mui/material';
 import calculateAllInsights from './utils/InsightUtil';
 // import * as parser from 'chess-pgn-parser';
 
@@ -136,49 +139,58 @@ const App = () => {
     fetchInsights(tournamentGames)
   }, [tournamentGames])
   
+  const darkTheme = createTheme({
+    palette: {
+      mode: 'dark',
+    },
+  });
+
   return (
-    <Box sx={{display:"flex", flexDirection: "column", alignItems: "center"}}>
-    <AppBar position="static" sx={{backgroundColor: 'black'}}>
-        <Typography  sx={{alignSelf: "center" }} variant="h4">
-          Chess Insights Generator
-        </Typography>
-      </AppBar>
-      
-      <br></br>
-      <Card sx={{width:'60%', alignSelf:'center'}}>
-        <CardContent>
-          <FormGroup sx={{display:"flex", flexDirection: "row", justifyContent: "space-around", alignItems:"end"}}>
-            <FormControl sx={{flex:"3", marginRight:"1em"}}>
-              <InputLabel id="demo-simple-select-label">Select the type of Tournament</InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                id="demo-simple-select"
-                value={tournamentType}
-                label="Tournament Type"
-                onChange={(e) => {setTournamentType(e.target.value)}}
-              >
-                <MenuItem value="swiss">Swiss</MenuItem>
-                <MenuItem value="tournament">Arena</MenuItem>
-                <MenuItem value="broadcast">Broadcast</MenuItem>
-              </Select>
-            </FormControl>
-            <FormControl sx={{flex:"2", marginRight:"1em"}}>
-              <InputLabel htmlFor="my-input">Tournamnet ID</InputLabel>
-              <Input id="my-input" onChange={(e) => {setTournamentId(e.target.value)}}/>
-            </FormControl>
-            <Button  variant="contained" onClick={fetchGames}>
-                Send
-            </Button>
-          </FormGroup>
-        </CardContent>
-      </Card>
-      <br></br>
-      {loading ? (
-        <p>Loading insights...</p>
-      ) : (
-          <InsightsPoster insights={insights}/>
-      )}
-    </Box>
+    <ThemeProvider theme={darkTheme}>
+      <Box sx={{display:"flex", flexDirection: "column", alignItems: "center"}}>
+        <CssBaseline />
+        <AppBar position="static" sx={{backgroundColor: 'black'}}>
+          <Typography  sx={{alignSelf: "center" }} variant="h4">
+            Chess Insights Generator
+          </Typography>
+        </AppBar>
+        
+        <br></br>
+        <Card sx={{width:'60%', alignSelf:'center'}}>
+          <CardContent>
+            <FormGroup sx={{display:"flex", flexDirection: "row", justifyContent: "space-around", alignItems:"end"}}>
+              <FormControl sx={{flex:"3", marginRight:"1em"}}>
+                <InputLabel id="demo-simple-select-label">Select the type of Tournament</InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  id="demo-simple-select"
+                  value={tournamentType}
+                  label="Tournament Type"
+                  onChange={(e) => {setTournamentType(e.target.value)}}
+                >
+                  <MenuItem value="swiss">Swiss</MenuItem>
+                  <MenuItem value="tournament">Arena</MenuItem>
+                  <MenuItem value="broadcast">Broadcast</MenuItem>
+                </Select>
+              </FormControl>
+              <FormControl sx={{flex:"2", marginRight:"1em"}}>
+                <InputLabel htmlFor="my-input">Tournamnet ID</InputLabel>
+                <Input id="my-input" onChange={(e) => {setTournamentId(e.target.value)}}/>
+              </FormControl>
+              <Button  variant="contained" onClick={fetchGames}>
+                  Generate
+              </Button>
+            </FormGroup>
+          </CardContent>
+        </Card>
+        <br></br>
+        {loading ? (
+          <LinearProgress />
+          ) : (
+              <InsightsPoster insights={insights}/>
+          )}
+      </Box>
+    </ThemeProvider>
   );
 };
 
