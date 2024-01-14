@@ -1,11 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import InsightsPoster from './components/InsightsPoster';
-import {InputLabel,FormControl, Button, Input } from '@mui/material';
+import {FormGroup, InputLabel,FormControl, Button, Input, MenuItem, Select, Card, AppBar, Typography, CardContent, Box } from '@mui/material';
 import calculateAllInsights from './utils/InsightUtil';
+// import * as parser from 'chess-pgn-parser';
+
 const App = () => {
   const [insights, setInsights] = useState({});
   const [tournamentGames, setTournamentGames] = useState("")
-  const [swissId, setTournamentId] = useState("")
+  const [tournamentId, setTournamentId] = useState("")
+  const [tournamentType, setTournamentType] = useState("")
   const [loading, setLoading] = useState(true);
   var fetchData = []
   const fetchInsights = async (tournamentGames) => {
@@ -18,7 +21,7 @@ const App = () => {
     setLoading(false);
   }
 
-  const fetchSwissGames = async () => {
+  const fetchGames = async () => {
     var requestOptions = {
       method: 'GET',
       headers: {
@@ -28,7 +31,7 @@ const App = () => {
       redirect: 'follow'
     };
 
-    fetch(`https://lichess.org/api/tournament/${swissId}/games?evals=true&accuracy=true&clocks=true&opening=true`, requestOptions)
+    fetch(`https://lichess.org/api/${tournamentType}/${tournamentId}/games?evals=true&accuracy=true&clocks=true&opening=true`, requestOptions)
       .then(response => {
         return response.body.getReader()
       })
@@ -67,33 +70,115 @@ const App = () => {
     return read();
         })
       .then(() => {
+        console.log(fetchData)
         setTournamentGames(fetchData)
       })
       .catch(error => console.log('error', error));
   };
+
+  // const fetchBroadcastGames = async () => {
+  //   const anyRoundId = "CEyHlKyt"
+  //   var broadcastId = ""
+  //   var requestOptions = {
+  //     method: 'GET',
+  //     headers: {
+  //       "Content-Type":  "application/json",
+  //       "Accept": "application/json"
+  //     },
+  //     redirect: 'follow'
+  //   };
+
+  //   fetch(`https://lichess.org/api/broadcast/round/CEyHlKyt.pgn`)
+  //           .then(pgnFile => {
+  //             var json = parser.pgn2json(pgnFile);
+  //             console.log(json);
+  //           })
+
+  //   // fetch(`https://lichess.org/api/broadcast/-/-/${anyRoundId}`, requestOptions)
+  //   // .then(r => r.json())
+  //   // .then(result => {
+  //   //   console.log(result)
+  //   //   return result["tour"]["id"]
+  //   // })
+  //   // .then(tournamentId => {
+  //   //   fetch(`https://lichess.org/api/broadcast`)
+  //   //   .then(result =>{ 
+  //   //     //console.log(result.text())
+  //   //     console.log(result.json())
+  //   //     return result.text()
+  //   //   })
+  //   //   .then(result => {
+  //   //     return result.filter(tournament => {
+  //   //       if(tournament["tour"]["id"] === tournamentId) {
+  //   //         return tournament["rounds"]
+  //   //       } else {
+  //   //         console.log("No tournament with id-" + tournamentId)
+  //   //         return []
+  //   //       }
+  //   //     })
+  //   //   })
+  //   //   .then(selectedTournament => {
+  //   //     selectedTournament.array.forEach(round => {
+  //   //       console.log(round)
+  //   //       fetch(`https://lichess.org/api/broadcast/round/${round["id"]}.pgn`)
+  //   //       .then(pgnFile => {
+  //   //         var json = parser.pgn2json(pgnFile);
+  //   //         console.log(json);
+  //   //       })
+  //   //     });
+  //   //   })
+  //   // })
+  //   // .catch(error => console.log('error', error));
+    
+  // }
 
   useEffect(() => {
     fetchInsights(tournamentGames)
   }, [tournamentGames])
   
   return (
-    <div className="App">
-      <h1>Chess Insights</h1>
-      <FormControl>
-        <InputLabel htmlFor="my-input">Tournamnet ID</InputLabel>
-        <Input id="my-input" onChange={(e) => {setTournamentId(e.target.value)}}/>
-        <Button variant="contained" onClick={fetchSwissGames}>
-          Send
-        </Button>
-      </FormControl>
+    <Box sx={{display:"flex", flexDirection: "column", alignItems: "center"}}>
+    <AppBar position="static" sx={{backgroundColor: 'black'}}>
+        <Typography  sx={{alignSelf: "center" }} variant="h4">
+          Chess Insights Generator
+        </Typography>
+      </AppBar>
+      
+      <br></br>
+      <Card sx={{width:'60%', alignSelf:'center'}}>
+        <CardContent>
+          <FormGroup sx={{display:"flex", flexDirection: "row", justifyContent: "space-around", alignItems:"end"}}>
+            <FormControl sx={{flex:"3", marginRight:"1em"}}>
+              <InputLabel id="demo-simple-select-label">Select the type of Tournament</InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                id="demo-simple-select"
+                value={tournamentType}
+                label="Tournament Type"
+                onChange={(e) => {setTournamentType(e.target.value)}}
+              >
+                <MenuItem value="swiss">Swiss</MenuItem>
+                <MenuItem value="tournament">Arena</MenuItem>
+                <MenuItem value="broadcast">Broadcast</MenuItem>
+              </Select>
+            </FormControl>
+            <FormControl sx={{flex:"2", marginRight:"1em"}}>
+              <InputLabel htmlFor="my-input">Tournamnet ID</InputLabel>
+              <Input id="my-input" onChange={(e) => {setTournamentId(e.target.value)}}/>
+            </FormControl>
+            <Button  variant="contained" onClick={fetchGames}>
+                Send
+            </Button>
+          </FormGroup>
+        </CardContent>
+      </Card>
+      <br></br>
       {loading ? (
         <p>Loading insights...</p>
       ) : (
-        <div>
           <InsightsPoster insights={insights}/>
-        </div>
       )}
-    </div>
+    </Box>
   );
 };
 
