@@ -6,7 +6,12 @@ const INSIGHTS = {
     MOST_DYNAMIC_GAME: "MOST_DYNAMIC_GAME",
     MOST_USED_OPENING: "MOST_USED_OPENING",
     MOST_USED_OPENING_MOVE: "MOST_USED_OPENING_MOVE",
-    MOST_ACCURATE_PLAYER: "MOST_ACCURATE_PLAYER"
+    MOST_ACCURATE_PLAYER: "MOST_ACCURATE_PLAYER",
+    HIGHEST_WINNING_STREAK: "HIGHEST_WINNING_STREAK",
+    HIGHEST_CURRENT_WINNING_STREAK: "HIGHEST_CURRENT_WINNING_STREAK",
+    HIGHEST_LOSING_STREAK: "HIGHEST_LOSING_STREAK",
+    HIGHEST_CURRENT_LOSING_STREAK: "HIGHEST_CURRENT_LOSING_STREAK",
+
 }
 
 const maxConsecutiveDifferenceWithPositions = (arr) => {
@@ -28,29 +33,60 @@ const maxConsecutiveDifferenceWithPositions = (arr) => {
     return [maxDiff, maxDiffPositions];
 };
 
+const highestConsecutiveCount = (arr, value) => {
+    let maxCount = 0;
+    let currentCount = 0;
+
+    for (const element of arr) {
+        if (element === value) {
+            currentCount++;
+            if (currentCount > maxCount) {
+                maxCount = currentCount;
+            }
+        } else {
+            currentCount = 0;
+        }
+    }
+
+    return maxCount;
+};
+
 const calculateAllInsights = (tournamentGames, insightsToCalculate) => {
     var TournamentInsight = {}
     function formatInsight(name, gameId, whitePlayer, blackPlayer, value) {
-        TournamentInsight[name] = {
+        TournamentInsight[name] = [{
             'gameId': gameId,
             'players': {
             'white': whitePlayer,
             'black': blackPlayer,
             },
             'value': value,
-        };
+        }];
     }
-    var leastNoOfMoves = 1000000
-    var mostNoOfMoves = 0
+    var leastNoOfMoves = Number.MAX_VALUE
+    var mostNoOfMoves = Number.MIN_VALUE
     let maxDiff = -Infinity;
     let maxAcc = 0;
     let OpeningMap = {}
     let playerMap = {};
+    let playerToGamesMap = {}
     let startingMove = {};
     let dynamicGame = []
     let analysedGames = 0
     let totalGames = 0
     for(const game of tournamentGames) {
+        if(playerToGamesMap[game.players.white.user.name] == undefined) {
+            playerToGamesMap[game.players.white.user.name] = [game.winner === "white"]
+        } else {
+            playerToGamesMap[game.players.white.user.name].push(game.winner === "white")
+        }
+
+        if(playerToGamesMap[game.players.black.user.name] == undefined) {
+            playerToGamesMap[game.players.black.user.name] = [game.winner === "black"]    
+        } else {
+            playerToGamesMap[game.players.black.user.name].push(game.winner === "black")
+        }
+        
         var noOfMoves = Math.floor(game.moves.split(' ').length / 2)
         totalGames += 1 
         if(game["analysis"] !== undefined) {
@@ -184,7 +220,7 @@ const calculateAllInsights = (tournamentGames, insightsToCalculate) => {
     if(insightsToCalculate.includes(INSIGHTS.MOST_USED_OPENING) && Object.values(OpeningMap).length > 0) {
         const maxName = Object.keys(OpeningMap).reduce((a, b) => (OpeningMap[a] > OpeningMap[b] ? a : b));
         const maxNumber = OpeningMap[maxName];
-        formatInsight(INSIGHTS.MOST_USED_OPENING, undefined, undefined, undefined, { openingName: maxName, noOfTimes: maxNumber });
+        formatInsight(INSIGHTS.MOST_USED_OPENING, undefined, undefined, undefined, { openingName:    , noOfTimes: maxNumber });
     }
 
     if(insightsToCalculate.includes(INSIGHTS.MOST_USED_OPENING_MOVE) && Object.values(startingMove).length > 0) {
@@ -200,7 +236,7 @@ const calculateAllInsights = (tournamentGames, insightsToCalculate) => {
 
     if(insightsToCalculate.includes(INSIGHTS.MOST_ACCURATE_PLAYER) && Object.values(playerMap).length > 0) {
         for (const player in playerMap) {
-            if(playerMap[player].noMatches > 5)
+            if(playerMap[player].noMatches >= (totalGames/2))
                 playerMap[player].totalAcc = playerMap[player].totalAcc / playerMap[player].noMatches;
             else {
                 playerMap[player].totalAcc = 0
@@ -214,6 +250,31 @@ const calculateAllInsights = (tournamentGames, insightsToCalculate) => {
             noOfMatches: playerMap[accuratePlayer].noMatches,
           });
     }
+
+    if(insightsToCalculate.includes(INSIGHTS.HIGHEST_WINNING_STREAK) && Object.values(playerToGamesMap).length > 0) {
+        let hStreak = Number.MIN_VALUE
+        let winner = []
+        for(let pl in playerToGamesMap) {
+            let cStreak = highestConsecutiveCount(playerToGamesMap[pl], true)
+            if(cStreak >= hStreak) {
+                if(cStreak === hStreak) {
+                    winner.push(pl)
+                } else {
+                    winner = [pl]
+                }
+                
+                hStreak = cStreak
+            }
+        }
+        console.log(hStreak)
+        console.log(winner)
+        formatInsight(INSIGHTS.HIGHEST_WINNING_STREAK, undefined, undefined, undefined, {
+            playerNames: winner,
+            streakCount: hStreak
+        })
+    }
+
+    console.log(playerToGamesMap)
 
     console.log(TournamentInsight)
     console.log("Analysed Games",analysedGames)
